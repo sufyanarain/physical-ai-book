@@ -13,6 +13,9 @@ function HomepageHeader() {
       <div className="container">
         <h1 className="hero__title">{siteConfig.title}</h1>
         <p className="hero__subtitle">{siteConfig.tagline}</p>
+        <div style={{marginTop: '1rem', fontSize: '0.9rem', opacity: 0.9}}>
+          <p>Created by <strong>Faiza Siddiqui</strong> | ID: <strong>265718</strong></p>
+        </div>
         <div className={styles.buttons}>
           <Link
             className="button button--secondary button--lg"
