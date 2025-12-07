@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 // Replace 'yourusername' and 'physical-ai-textbook' with your actual values
 const config: Config = {
-  title: 'Physical AI & Humanoid Robotics',
+  title: '🤖 Physical AI & Humanoid Robotics',
   tagline: 'Master the future of embodied intelligence',
   favicon: 'img/favicon.ico',
 
