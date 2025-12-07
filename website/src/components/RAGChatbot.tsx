@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 import '@site/src/css/custom.css';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  context?: string;
 }
 
 const BACKEND_URL = 'http://localhost:8000';
 
-export default function RAGChatbot(): JSX.Element {
+export default function RAGChatbot(): React.ReactElement {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -34,8 +36,10 @@ export default function RAGChatbot(): JSX.Element {
     const handleSelection = () => {
       const selection = window.getSelection();
       const text = selection?.toString().trim();
-      if (text && text.length > 10) {
+      if (text && text.length > 3) {
         setSelectedText(text);
+        // Auto-open chatbot when text is selected
+        setIsOpen(true);
       }
     };
 
@@ -46,7 +50,11 @@ export default function RAGChatbot(): JSX.Element {
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    const userMessage: Message = { role: 'user', content: input };
+    const userMessage: Message = { 
+      role: 'user', 
+      content: input,
+      context: selectedText || undefined
+    };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setLoading(true);
@@ -118,16 +126,31 @@ export default function RAGChatbot(): JSX.Element {
           {/* Messages */}
           <div className="chatbot-messages">
             {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`message ${msg.role === 'user' ? 'message-user' : 'message-bot'}`}
-              >
-                {msg.content}
+              <div key={idx}>
+                {msg.context && msg.role === 'user' && (
+                  <div className="context-bubble">
+                    <div className="context-label">📄 Context</div>
+                    <div className="context-text">{msg.context}</div>
+                  </div>
+                )}
+                <div
+                  className={`message ${msg.role === 'user' ? 'message-user' : 'message-bot'}`}
+                >
+                  {msg.role === 'assistant' ? (
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  ) : (
+                    msg.content
+                  )}
+                </div>
               </div>
             ))}
             {loading && (
-              <div className="message message-bot">
-                <em>Thinking...</em>
+              <div className="message message-bot loading-message">
+                <div className="typing-indicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -135,12 +158,24 @@ export default function RAGChatbot(): JSX.Element {
 
           {/* Input */}
           <div className="chatbot-input-container">
-            <div style={{ flex: 1 }}>
-              {selectedText && (
-                <div className="selected-text-indicator">
-                  📄 Selected text will be used as context
+            {selectedText && (
+              <div className="selected-text-preview">
+                <div className="selected-text-header">
+                  <span>📄 Selected Context</span>
+                  <button 
+                    className="clear-context-btn"
+                    onClick={() => setSelectedText('')}
+                    title="Clear context"
+                  >
+                    ✕
+                  </button>
                 </div>
-              )}
+                <div className="selected-text-content">
+                  {selectedText.length > 100 ? selectedText.substring(0, 100) + '...' : selectedText}
+                </div>
+              </div>
+            )}
+            <div className="input-wrapper">
               <input
                 type="text"
                 className="chatbot-input"
@@ -150,14 +185,18 @@ export default function RAGChatbot(): JSX.Element {
                 onKeyPress={handleKeyPress}
                 disabled={loading}
               />
+              <button
+                className="chatbot-send"
+                onClick={sendMessage}
+                disabled={loading || !input.trim()}
+                title="Send message"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </button>
             </div>
-            <button
-              className="chatbot-send"
-              onClick={sendMessage}
-              disabled={loading || !input.trim()}
-            >
-              Send
-            </button>
           </div>
         </div>
       )}
