@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import '@site/src/css/custom.css';
 
 interface Message {
   role: 'user' | 'assistant';
