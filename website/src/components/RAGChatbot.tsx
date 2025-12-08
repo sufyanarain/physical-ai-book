@@ -8,9 +8,8 @@ interface Message {
   context?: string;
 }
 
-const BACKEND_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://physical-ai-backend-production-b62f.up.railway.app'
-  : 'http://localhost:8000';
+// Use Railway backend for both dev and production
+const BACKEND_URL = 'https://physical-ai-backend-production-b62f.up.railway.app';
 
 export default function RAGChatbot(): React.ReactElement {
   const [isOpen, setIsOpen] = useState(false);
