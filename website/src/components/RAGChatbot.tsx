@@ -8,7 +8,9 @@ interface Message {
   context?: string;
 }
 
-const BACKEND_URL = 'http://localhost:8000';
+const BACKEND_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://physical-ai-backend.onrender.com'  // You'll replace this with your actual Render URL
+  : 'http://localhost:8000';
 
 export default function RAGChatbot(): React.ReactElement {
   const [isOpen, setIsOpen] = useState(false);
