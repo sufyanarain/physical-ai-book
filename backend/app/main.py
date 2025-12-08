@@ -23,7 +23,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "https://sufyanarain.github.io",
-        "https://*.github.io"
+        "https://*.github.io",
+        "*"  # Allow all origins for now
     ],
     allow_credentials=True,
     allow_methods=["*"],
