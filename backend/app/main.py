@@ -84,6 +84,15 @@ class SearchRequest(BaseModel):
 class SearchResponse(BaseModel):
     results: List[Dict[str, Any]]
 
+class TranslateRequest(BaseModel):
+    content: str
+    target_language: str = "urdu"
+
+class TranslateResponse(BaseModel):
+    original: str
+    translated: str
+    target_language: str
+
 # Routes
 @app.get("/")
 async def root():
@@ -198,6 +207,55 @@ async def delete_collection():
         return {"message": "Collection deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/translate", response_model=TranslateResponse)
+async def translate_content(request: TranslateRequest):
+    """
+    Translate content to target language using Groq LLM
+    """
+    try:
+        from groq import Groq
+        from app.config import settings
+
+        client = Groq(api_key=settings.groq_api_key)
+
+        # Use LLM for high-quality translation
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {
+                    "role": "system",
+                    "content": f"""You are an expert translator specializing in technical documentation.
+Translate the following technical content about Physical AI and Robotics to {request.target_language}.
+
+Guidelines:
+1. Maintain technical accuracy
+2. Keep code blocks, syntax, and technical terms intact
+3. Translate explanatory text naturally
+4. Preserve markdown formatting
+5. Keep proper nouns and technical acronyms in English (ROS 2, NVIDIA Isaac, etc.)
+6. Ensure the translation is culturally appropriate and technically precise
+
+Return ONLY the translated text without any preamble or explanation."""
+                },
+                {
+                    "role": "user",
+                    "content": request.content
+                }
+            ],
+            temperature=0.3,
+            max_tokens=4000
+        )
+
+        translated_text = response.choices[0].message.content
+
+        return TranslateResponse(
+            original=request.content,
+            translated=translated_text,
+            target_language=request.target_language
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Translation error: {str(e)}")
 
 if __name__ == "__main__":
     import os
