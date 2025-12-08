@@ -8,4 +8,4 @@ cmds = ["pip install --no-cache-dir -r requirements.txt"]
 cmds = []
 
 [start]
-cmd = "uvicorn app.main:app --host 0.0.0.0 --port $PORT --timeout-keep-alive 75"
+cmd = "sh -c 'uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --timeout-keep-alive 75'"
