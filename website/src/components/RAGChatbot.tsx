@@ -51,9 +51,9 @@ export default function RAGChatbot(): React.ReactElement {
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    const userMessage: Message = { 
-      role: 'user', 
-      content: input,
+    const userMessage: Message = {
+      role: 'user',
+      content: selectedText ? `Context: "${selectedText}"\n\nQuestion: ${input}` : input,
       context: selectedText || undefined
     };
     setMessages(prev => [...prev, userMessage]);
@@ -61,12 +61,19 @@ export default function RAGChatbot(): React.ReactElement {
     setLoading(true);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/ask`, {
+      // Build conversation history for the chat endpoint
+      const conversationHistory = [...messages, userMessage].map(msg => ({
+        role: msg.role,
+        content: msg.role === 'user' && msg.context
+          ? `Context: "${msg.context}"\n\nQuestion: ${msg.content}`
+          : msg.content
+      }));
+
+      const response = await fetch(`${BACKEND_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          question: input,
-          selected_text: selectedText || null
+          messages: conversationHistory
         })
       });
 
@@ -75,7 +82,7 @@ export default function RAGChatbot(): React.ReactElement {
       }
 
       const data = await response.json();
-      const botMessage: Message = { role: 'assistant', content: data.answer };
+      const botMessage: Message = { role: 'assistant', content: data.response };
       setMessages(prev => [...prev, botMessage]);
       setSelectedText(''); // Clear selected text after using it
     } catch (error) {

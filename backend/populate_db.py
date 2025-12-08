@@ -44,26 +44,26 @@ def main():
     docs_dir = project_root / "website" / "docs"
     
     if not docs_dir.exists():
-        print(f"❌ Docs directory not found: {docs_dir}")
+        print(f"ERROR: Docs directory not found: {docs_dir}")
         sys.exit(1)
-    
-    print(f"📂 Reading markdown files from: {docs_dir}")
+
+    print(f"Reading markdown files from: {docs_dir}")
     documents = read_markdown_files(docs_dir)
-    
+
     if not documents:
-        print("❌ No content found")
+        print("ERROR: No content found")
         sys.exit(1)
-    
-    print(f"✅ Found {len(documents)} text chunks from markdown files")
-    
-    print("\n🗄️  Setting up vector database...")
+
+    print(f"Found {len(documents)} text chunks from markdown files")
+
+    print("\nSetting up vector database...")
     vector_db = VectorDB()
     vector_db.create_collection()
-    
-    print("\n💾 Adding documents to vector database...")
+
+    print("\nAdding documents to vector database...")
     vector_db.add_documents(documents)
-    
-    print("\n✅ Indexing complete!")
+
+    print("\nIndexing complete!")
     print(f"   - Chunks indexed: {len(documents)}")
     print(f"   - Collection: {vector_db.collection_name}")
 

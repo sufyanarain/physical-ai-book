@@ -45,35 +45,41 @@ class VectorDB:
         )
         return response.embeddings
     
-    def add_documents(self, documents: List[Dict[str, str]]):
-        """Add documents to the vector database"""
-        texts = [doc["content"] for doc in documents]
-        embeddings = self.get_embeddings(texts)
-        
-        if not embeddings:
-            print("Failed to generate embeddings")
-            return
-        
-        points = []
-        for i, (doc, embedding) in enumerate(zip(documents, embeddings)):
-            point_id = hashlib.md5(doc["content"].encode()).hexdigest()
-            points.append(
-                PointStruct(
-                    id=point_id,
-                    vector=embedding,
-                    payload={
-                        "title": doc.get("title", ""),
-                        "content": doc["content"],
-                        "source": doc.get("source", "")
-                    }
+    def add_documents(self, documents: List[Dict[str, str]], batch_size: int = 50):
+        """Add documents to the vector database in batches"""
+        total_docs = len(documents)
+
+        for batch_start in range(0, total_docs, batch_size):
+            batch_end = min(batch_start + batch_size, total_docs)
+            batch_docs = documents[batch_start:batch_end]
+
+            texts = [doc["content"] for doc in batch_docs]
+            embeddings = self.get_embeddings(texts)
+
+            if not embeddings:
+                print(f"Failed to generate embeddings for batch {batch_start}-{batch_end}")
+                continue
+
+            points = []
+            for i, (doc, embedding) in enumerate(zip(batch_docs, embeddings)):
+                point_id = hashlib.md5(doc["content"].encode()).hexdigest()
+                points.append(
+                    PointStruct(
+                        id=point_id,
+                        vector=embedding,
+                        payload={
+                            "title": doc.get("title", ""),
+                            "content": doc["content"],
+                            "source": doc.get("source", "")
+                        }
+                    )
                 )
+
+            self.client.upsert(
+                collection_name=self.collection_name,
+                points=points
             )
-        
-        self.client.upsert(
-            collection_name=self.collection_name,
-            points=points
-        )
-        print(f"Added {len(points)} documents to the collection")
+            print(f"Added batch {batch_start+1}-{batch_end} ({len(points)} documents)")
     
     def search(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
         """Search for similar documents"""
