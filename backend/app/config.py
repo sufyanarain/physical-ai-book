@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     database_url: str = os.getenv("DATABASE_URL", "")
     neon_database_url: str = os.getenv("NEON_DATABASE_URL", "")
     
+    # Security
+    secret_key: str = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
+    
     # Server Configuration
     port: int = int(os.getenv("PORT", "8000"))
     host: str = os.getenv("HOST", "0.0.0.0")
