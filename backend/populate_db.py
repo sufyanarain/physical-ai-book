@@ -23,14 +23,42 @@ def read_markdown_files(docs_dir):
                 if line.startswith('# '):
                     title = line.replace('# ', '').strip()
                     break
-            
-            # Split into chunks (simple paragraph-based chunking)
-            paragraphs = [p.strip() for p in content.split('\n\n') if p.strip() and len(p.strip()) > 50]
-            
-            for i, para in enumerate(paragraphs):
+
+            # Improved chunking: split by ## headings to keep sections together
+            sections = []
+            current_section = []
+            current_heading = title
+
+            for line in lines:
+                if line.startswith('## '):
+                    # Save previous section if it has content
+                    if current_section:
+                        section_text = '\n'.join(current_section).strip()
+                        if len(section_text) > 50:
+                            sections.append({
+                                "heading": current_heading,
+                                "content": section_text
+                            })
+                    # Start new section
+                    current_heading = line.replace('## ', '').strip()
+                    current_section = [line]
+                else:
+                    current_section.append(line)
+
+            # Don't forget the last section
+            if current_section:
+                section_text = '\n'.join(current_section).strip()
+                if len(section_text) > 50:
+                    sections.append({
+                        "heading": current_heading,
+                        "content": section_text
+                    })
+
+            # Create documents from sections
+            for i, section in enumerate(sections):
                 documents.append({
-                    "title": f"{title} (Part {i+1})",
-                    "content": para,
+                    "title": f"{title} - {section['heading']}",
+                    "content": section['content'],
                     "source": str(md_file.relative_to(docs_path.parent))
                 })
         except Exception as e:
