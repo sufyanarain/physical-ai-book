@@ -91,7 +91,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Physical AI Textbook. Created by <strong>Faiza Siddiqui (ID: 265718)</strong> for Panaversity Hackathon.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Physical AI Textbook. Created by <strong>Muhammad Sufyan</strong> for Panaversity Hackathon.`,
     },
     prism: {
       theme: prismThemes.github,

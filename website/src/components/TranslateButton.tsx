@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '@site/src/css/custom.css';
 
-const BACKEND_URL = 'https://physical-ai-backend-production-b62f.up.railway.app';
+// Use local backend in development, Railway in production
+const BACKEND_URL = process.env.NODE_ENV === 'development'
+  ? 'http://localhost:8000'
+  : 'https://physical-ai-backend-production-b62f.up.railway.app';
 
 interface TranslateButtonProps {
   content: string;
@@ -14,12 +17,49 @@ export default function TranslateButton({ content, onTranslate }: TranslateButto
   const [translatedContent, setTranslatedContent] = useState('');
   const [error, setError] = useState('');
 
+  // Check if we have cached translation in sessionStorage
+  useEffect(() => {
+    // Create a simple hash from content for cache key (avoiding btoa with Unicode)
+    const createHash = (str: string) => {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+      }
+      return hash.toString(36);
+    };
+    
+    const cacheKey = `translation_${createHash(content.substring(0, 100))}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const { translated, timestamp } = JSON.parse(cached);
+        // Cache valid for 1 hour
+        if (Date.now() - timestamp < 3600000) {
+          setTranslatedContent(translated);
+        }
+      } catch (e) {
+        console.error('Cache parse error:', e);
+      }
+    }
+  }, [content]);
+
   const handleTranslate = async () => {
     if (isTranslated) {
       // Toggle back to original
       setIsTranslated(false);
       if (onTranslate) {
         onTranslate(''); // Clear translation
+      }
+      return;
+    }
+
+    // Use cached translation if available
+    if (translatedContent) {
+      setIsTranslated(true);
+      if (onTranslate) {
+        onTranslate(translatedContent);
       }
       return;
     }
@@ -44,11 +84,29 @@ export default function TranslateButton({ content, onTranslate }: TranslateButto
       }
 
       const data = await response.json();
-      setTranslatedContent(data.translated);
+      const translated = data.translated;
+      setTranslatedContent(translated);
       setIsTranslated(true);
 
+      // Cache the translation using hash instead of btoa
+      const createHash = (str: string) => {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+          const char = str.charCodeAt(i);
+          hash = ((hash << 5) - hash) + char;
+          hash = hash & hash;
+        }
+        return hash.toString(36);
+      };
+      
+      const cacheKey = `translation_${createHash(content.substring(0, 100))}`;
+      sessionStorage.setItem(cacheKey, JSON.stringify({
+        translated,
+        timestamp: Date.now()
+      }));
+
       if (onTranslate) {
-        onTranslate(data.translated);
+        onTranslate(translated);
       }
     } catch (err) {
       setError('Failed to translate content. Please try again.');

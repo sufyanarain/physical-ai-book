@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     
     # Database Configuration
     database_url: str = os.getenv("DATABASE_URL", "")
+    neon_database_url: str = os.getenv("NEON_DATABASE_URL", "")
     
     # Server Configuration
     port: int = int(os.getenv("PORT", "8000"))

@@ -3,6 +3,7 @@ import Content from '@theme-original/DocItem/Content';
 import type ContentType from '@theme/DocItem/Content';
 import type { WrapperProps } from '@docusaurus/types';
 import TranslateButton from '@site/src/components/TranslateButton';
+import ReactMarkdown from 'react-markdown';
 
 type Props = WrapperProps<typeof ContentType>;
 
@@ -15,9 +16,10 @@ export default function ContentWrapper(props: Props): JSX.Element {
     // Extract the main content from the page
     const contentElement = document.querySelector('.markdown');
     if (contentElement) {
+      // Get text content for translation
       setOriginalContent(contentElement.textContent || '');
     }
-  }, []);
+  }, [props]);
 
   const handleTranslate = (translated: string) => {
     if (translated) {
@@ -32,14 +34,23 @@ export default function ContentWrapper(props: Props): JSX.Element {
           contentElement.setAttribute('data-original-html', contentElement.innerHTML);
         }
 
-        // Show translated content
+        // Create translated content container
         const translatedDiv = document.createElement('div');
         translatedDiv.className = 'translated-content';
-        translatedDiv.style.direction = 'rtl'; // Right-to-left for Urdu
-        translatedDiv.style.textAlign = 'right';
-        translatedDiv.style.fontFamily = 'Noto Nastaliq Urdu, Arial, sans-serif';
-        translatedDiv.innerHTML = translated.replace(/\n/g, '<br>');
+        
+        // Parse markdown-like content for better formatting
+        const formattedContent = translated
+          .split('\n\n')
+          .map(para => {
+            // Preserve code blocks
+            if (para.trim().startsWith('```') || para.includes('`')) {
+              return `<pre style="direction: ltr; text-align: left;">${para}</pre>`;
+            }
+            return `<p>${para}</p>`;
+          })
+          .join('');
 
+        translatedDiv.innerHTML = formattedContent;
         contentElement.innerHTML = '';
         contentElement.appendChild(translatedDiv);
       }
@@ -58,11 +69,7 @@ export default function ContentWrapper(props: Props): JSX.Element {
 
   return (
     <>
-      <div style={{
-        borderBottom: '1px solid var(--ifm-color-emphasis-300)',
-        paddingBottom: '1rem',
-        marginBottom: '1.5rem'
-      }}>
+      <div className="translate-button-wrapper">
         <TranslateButton
           content={originalContent}
           onTranslate={handleTranslate}

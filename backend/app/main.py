@@ -1,14 +1,21 @@
 """
 FastAPI application for RAG chatbot backend
 """
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import List, Optional, Dict, Any
 from app.agent import RAGAgent
 from app.vector_db import VectorDB
 from app.data_extractor import DataExtractor
 from app.config import settings
+from app.database import db
+from app.auth import (
+    get_password_hash, 
+    authenticate_user, 
+    create_access_token,
+    get_current_user
+)
 import uvicorn
 
 app = FastAPI(
@@ -53,6 +60,16 @@ def get_agent():
             )
     return agent
 
+# Initialize database on startup
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database connection on startup"""
+    try:
+        db.initialize()
+    except Exception as e:
+        print(f"Warning: Database initialization failed: {e}")
+        print("Continuing without database features...")
+
 # Request/Response Models
 class QuestionRequest(BaseModel):
     question: str
@@ -93,6 +110,43 @@ class TranslateResponse(BaseModel):
     translated: str
     target_language: str
 
+class UserPreferenceRequest(BaseModel):
+    session_id: str
+    language_preference: Optional[str] = None
+    personalization_level: Optional[str] = None
+    background: Optional[str] = None
+
+class UserPreferenceResponse(BaseModel):
+    session_id: str
+    language_preference: str
+    personalization_level: str
+    background: Optional[str] = None
+
+class SignupRequest(BaseModel):
+    email: EmailStr
+    name: str
+    password: str
+    software_experience: str = 'beginner'
+    hardware_experience: str = 'beginner'
+    learning_goals: Optional[str] = None
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: Dict[str, Any]
+
+class UserResponse(BaseModel):
+    id: int
+    email: str
+    name: str
+    software_experience: str
+    hardware_experience: str
+    learning_goals: Optional[str]
+
 # Routes
 @app.get("/")
 async def root():
@@ -105,6 +159,99 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+# Authentication endpoints
+@app.post("/auth/signup", response_model=AuthResponse)
+async def signup(request: SignupRequest):
+    """
+    Create a new user account with background information
+    """
+    try:
+        # Hash the password
+        password_hash = get_password_hash(request.password)
+        
+        # Create user
+        user = db.create_user(
+            email=request.email,
+            name=request.name,
+            password_hash=password_hash,
+            software_exp=request.software_experience,
+            hardware_exp=request.hardware_experience,
+            learning_goals=request.learning_goals
+        )
+        
+        if not user:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        # Create access token
+        access_token = create_access_token(data={"sub": str(user.id)})
+        
+        return AuthResponse(
+            access_token=access_token,
+            user={
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "software_experience": user.software_experience,
+                "hardware_experience": user.hardware_experience,
+                "learning_goals": user.learning_goals
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Signup error: {str(e)}")
+
+@app.post("/auth/login", response_model=AuthResponse)
+async def login(request: LoginRequest):
+    """
+    Login with email and password
+    """
+    try:
+        user = authenticate_user(request.email, request.password)
+        
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+        # Create access token
+        access_token = create_access_token(data={"sub": str(user.id)})
+        
+        return AuthResponse(
+            access_token=access_token,
+            user={
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "software_experience": user.software_experience,
+                "hardware_experience": user.hardware_experience,
+                "learning_goals": user.learning_goals
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Login error: {str(e)}")
+
+@app.get("/auth/me", response_model=UserResponse)
+async def get_me(authorization: Optional[str] = Header(None)):
+    """
+    Get current user information
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token)
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    
+    return UserResponse(
+        id=user.id,
+        email=user.email,
+        name=user.name,
+        software_experience=user.software_experience,
+        hardware_experience=user.hardware_experience,
+        learning_goals=user.learning_goals
+    )
 
 @app.post("/ask", response_model=QuestionResponse)
 async def ask_question(request: QuestionRequest):
@@ -256,6 +403,57 @@ Return ONLY the translated text without any preamble or explanation."""
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Translation error: {str(e)}")
+
+@app.post("/preferences", response_model=UserPreferenceResponse)
+async def save_preferences(request: UserPreferenceRequest):
+    """
+    Save user preferences to database
+    """
+    try:
+        pref = db.save_user_preference(
+            session_id=request.session_id,
+            language=request.language_preference,
+            personalization=request.personalization_level,
+            background=request.background
+        )
+        
+        if not pref:
+            raise HTTPException(status_code=500, detail="Failed to save preferences")
+        
+        return UserPreferenceResponse(
+            session_id=pref.session_id,
+            language_preference=pref.language_preference,
+            personalization_level=pref.personalization_level,
+            background=pref.background
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving preferences: {str(e)}")
+
+@app.get("/preferences/{session_id}", response_model=UserPreferenceResponse)
+async def get_preferences(session_id: str):
+    """
+    Get user preferences from database
+    """
+    try:
+        pref = db.get_user_preference(session_id)
+        
+        if not pref:
+            # Return defaults if no preferences found
+            return UserPreferenceResponse(
+                session_id=session_id,
+                language_preference="english",
+                personalization_level="intermediate",
+                background=None
+            )
+        
+        return UserPreferenceResponse(
+            session_id=pref.session_id,
+            language_preference=pref.language_preference,
+            personalization_level=pref.personalization_level,
+            background=pref.background
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting preferences: {str(e)}")
 
 if __name__ == "__main__":
     import os
