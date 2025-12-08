@@ -37,8 +37,21 @@ app.add_middleware(
     max_age=3600,  # Cache preflight requests for 1 hour
 )
 
-# Initialize services
-agent = RAGAgent()
+# Lazy initialization - initialize on first use to prevent startup crashes
+agent = None
+
+def get_agent():
+    """Get or initialize the RAG agent"""
+    global agent
+    if agent is None:
+        try:
+            agent = RAGAgent()
+        except Exception as e:
+            raise HTTPException(
+                status_code=503,
+                detail=f"Failed to initialize RAG agent: {str(e)}. Please check environment variables (GROQ_API_KEY, COHERE_API_KEY, QDRANT_URL, QDRANT_API_KEY)."
+            )
+    return agent
 
 # Request/Response Models
 class QuestionRequest(BaseModel):
@@ -91,7 +104,7 @@ async def ask_question(request: QuestionRequest):
     Supports optional selected_text for context-aware answers.
     """
     try:
-        result = agent.answer_question(
+        result = get_agent().answer_question(
             question=request.question,
             selected_text=request.selected_text
         )
@@ -114,7 +127,7 @@ async def chat(request: ChatRequest):
     """
     try:
         messages = [msg.dict() for msg in request.messages]
-        response = agent.chat(messages)
+        response = get_agent().chat(messages)
         return ChatResponse(response=response)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -125,7 +138,7 @@ async def search(request: SearchRequest):
     Search for relevant content in the vector database
     """
     try:
-        results = agent.vector_db.search(request.query, limit=request.limit)
+        results = get_agent().vector_db.search(request.query, limit=request.limit)
         return SearchResponse(results=results)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
