@@ -1,15 +1,15 @@
 """
-Vector Database module using Qdrant and sentence-transformers (free)
+Vector Database module using Qdrant and Cohere embeddings (free API)
 """
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
-from sentence_transformers import SentenceTransformer
+import cohere
 from typing import List, Dict, Any
 import hashlib
 from app.config import settings
 
 class VectorDB:
-    """Vector database operations using Qdrant and local embeddings"""
+    """Vector database operations using Qdrant and Cohere embeddings"""
     
     def __init__(self):
         self.client = QdrantClient(
@@ -17,9 +17,9 @@ class VectorDB:
             api_key=settings.qdrant_api_key
         )
         self.collection_name = "physical_ai_textbook"
-        # Use free local embedding model
-        self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-        self.vector_size = 384  # all-MiniLM-L6-v2 produces 384-dimensional vectors
+        # Use Cohere's free embedding API
+        self.cohere_client = cohere.Client(settings.cohere_api_key)
+        self.vector_size = 1024  # Cohere embed-english-light-v3.0 produces 1024-dimensional vectors
     
     def create_collection(self):
         """Create collection if it doesn't exist"""
@@ -37,9 +37,13 @@ class VectorDB:
             print(f"Collection '{self.collection_name}' created successfully")
     
     def get_embeddings(self, texts: List[str]) -> List[List[float]]:
-        """Get embeddings for texts using sentence-transformers"""
-        embeddings = self.embedding_model.encode(texts, convert_to_numpy=True)
-        return embeddings.tolist()
+        """Get embeddings for texts using Cohere API"""
+        response = self.cohere_client.embed(
+            texts=texts,
+            model="embed-english-light-v3.0",
+            input_type="search_document"
+        )
+        return response.embeddings
     
     def add_documents(self, documents: List[Dict[str, str]]):
         """Add documents to the vector database"""
@@ -74,7 +78,13 @@ class VectorDB:
     def search(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
         """Search for similar documents"""
         try:
-            query_embedding = self.get_embeddings([query])[0]
+            # Use search_query input type for queries
+            response = self.cohere_client.embed(
+                texts=[query],
+                model="embed-english-light-v3.0",
+                input_type="search_query"
+            )
+            query_embedding = response.embeddings[0]
             
             results = self.client.search(
                 collection_name=self.collection_name,

@@ -10,6 +10,7 @@ load_dotenv()
 class Settings(BaseSettings):
     # API Keys
     groq_api_key: str = os.getenv("GROQ_API_KEY", "")
+    cohere_api_key: str = os.getenv("COHERE_API_KEY", "")
     
     # Qdrant Configuration
     qdrant_url: str = os.getenv("QDRANT_URL", "")
