@@ -133,8 +133,7 @@ class SignupRequest(BaseModel):
     email: EmailStr
     name: str
     password: str
-    software_experience: str = 'beginner'
-    hardware_experience: str = 'beginner'
+    background_type: str = 'software'  # 'software' or 'hardware'
     learning_goals: Optional[str] = None
 
 class LoginRequest(BaseModel):
@@ -150,20 +149,8 @@ class UserResponse(BaseModel):
     id: int
     email: str
     name: str
-    software_experience: str
-    hardware_experience: str
+    background_type: str
     learning_goals: Optional[str]
-
-class PersonalizeRequest(BaseModel):
-    content: str
-    software_experience: str = 'beginner'
-    hardware_experience: str = 'beginner'
-    learning_goals: Optional[str] = None
-
-class PersonalizeResponse(BaseModel):
-    original_content: str
-    personalized_content: str
-    user_level: str
 
 # Routes
 @app.get("/")
@@ -193,8 +180,7 @@ async def signup(request: SignupRequest):
             email=request.email,
             name=request.name,
             password_hash=password_hash,
-            software_exp=request.software_experience,
-            hardware_exp=request.hardware_experience,
+            background_type=request.background_type,
             learning_goals=request.learning_goals
         )
         
@@ -210,8 +196,7 @@ async def signup(request: SignupRequest):
                 "id": user.id,
                 "email": user.email,
                 "name": user.name,
-                "software_experience": user.software_experience,
-                "hardware_experience": user.hardware_experience,
+                "background_type": user.background_type,
                 "learning_goals": user.learning_goals
             }
         )
@@ -238,8 +223,7 @@ async def login(request: LoginRequest):
                 "id": user.id,
                 "email": user.email,
                 "name": user.name,
-                "software_experience": user.software_experience,
-                "hardware_experience": user.hardware_experience,
+                "background_type": user.background_type,
                 "learning_goals": user.learning_goals
             }
         )
@@ -270,104 +254,6 @@ async def get_me(authorization: Optional[str] = Header(None)):
         hardware_experience=user.hardware_experience,
         learning_goals=user.learning_goals
     )
-
-@app.post("/personalize", response_model=PersonalizeResponse)
-async def personalize_content(request: PersonalizeRequest, authorization: Optional[str] = Header(None)):
-    """
-    Personalize content based on user's experience level and learning goals
-    """
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    
-    token = authorization.replace("Bearer ", "")
-    user = get_current_user(token)
-    
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
-    
-    try:
-        # Use user's actual experience levels
-        software_exp = user.software_experience or request.software_experience
-        hardware_exp = user.hardware_experience or request.hardware_experience
-        learning_goals = user.learning_goals or request.learning_goals or ""
-        
-        # Determine overall experience level for display
-        exp_levels = {"beginner": 0, "intermediate": 1, "advanced": 2}
-        avg_level = (exp_levels.get(software_exp, 0) + exp_levels.get(hardware_exp, 0)) / 2
-        if avg_level < 0.5:
-            overall_level = "beginner"
-        elif avg_level < 1.5:
-            overall_level = "intermediate"
-        else:
-            overall_level = "advanced"
-        
-        # Create personalization prompt
-        system_prompt = f"""You are an expert educator personalizing educational content about Physical AI and Humanoid Robotics.
-
-User Profile:
-- Software Experience: {software_exp}
-- Hardware Experience: {hardware_exp}
-- Learning Goals: {learning_goals}
-
-Your task is to adapt the following content to match the user's experience level:
-
-For BEGINNERS:
-- Add more explanations of basic concepts
-- Include analogies and real-world examples
-- Break down complex topics into smaller steps
-- Define technical terms
-- Add "Why this matters" sections
-
-For INTERMEDIATE learners:
-- Assume basic knowledge
-- Focus on practical applications
-- Include best practices and common pitfalls
-- Add references to related concepts
-- Include more technical details
-
-For ADVANCED learners:
-- Assume strong foundational knowledge
-- Dive deep into implementation details
-- Include optimization techniques
-- Reference research papers and advanced topics
-- Discuss trade-offs and design decisions
-
-Maintain the original structure and code examples, but adjust explanations and add context appropriate for the user's level.
-Preserve all formatting, code blocks, and markdown syntax."""
-        
-        user_prompt = f"""Personalize this content for a {overall_level} level learner:
-
-{request.content}
-
-Remember to:
-1. Keep all code examples intact
-2. Maintain markdown formatting
-3. Adjust explanation depth to match user level
-4. Add relevant context based on their learning goals
-5. Keep the same general structure"""
-
-        # Call Groq API for personalization
-        response = groq_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.7,
-            max_tokens=4000,
-        )
-        
-        personalized_content = response.choices[0].message.content
-        
-        return PersonalizeResponse(
-            original_content=request.content[:200] + "..." if len(request.content) > 200 else request.content,
-            personalized_content=personalized_content,
-            user_level=overall_level
-        )
-    
-    except Exception as e:
-        logger.error(f"Personalization error: {e}")
-        raise HTTPException(status_code=500, detail=f"Personalization failed: {str(e)}")
 
 @app.post("/ask", response_model=QuestionResponse)
 async def ask_question(request: QuestionRequest):

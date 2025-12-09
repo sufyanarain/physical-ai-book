@@ -10,8 +10,7 @@ export const api = {
     email: string;
     name: string;
     password: string;
-    software_experience: string;
-    hardware_experience: string;
+    background_type: string;
     learning_goals?: string;
   }) => {
     const response = await fetch(`${BACKEND_URL}/auth/signup`, {

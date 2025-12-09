@@ -16,8 +16,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps): React
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [softwareExp, setSoftwareExp] = useState('beginner');
-  const [hardwareExp, setHardwareExp] = useState('beginner');
+  const [backgroundType, setBackgroundType] = useState('software');
   const [learningGoals, setLearningGoals] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,8 +35,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps): React
           email,
           name,
           password,
-          software_experience: softwareExp,
-          hardware_experience: hardwareExp,
+          background_type: backgroundType,
           learning_goals: learningGoals || undefined,
         });
         localStorage.setItem('auth_token', response.access_token);
@@ -103,27 +101,35 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps): React
           {!isLogin && (
             <>
               <div className="form-group">
-                <label>Software Programming Experience</label>
-                <select 
-                  value={softwareExp} 
-                  onChange={(e) => setSoftwareExp(e.target.value)}
-                >
-                  <option value="beginner">Beginner - Just starting out</option>
-                  <option value="intermediate">Intermediate - Some experience</option>
-                  <option value="advanced">Advanced - Professional level</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Hardware/Robotics Experience</label>
-                <select 
-                  value={hardwareExp} 
-                  onChange={(e) => setHardwareExp(e.target.value)}
-                >
-                  <option value="beginner">Beginner - No experience</option>
-                  <option value="intermediate">Intermediate - Hobbyist level</option>
-                  <option value="advanced">Advanced - Professional experience</option>
-                </select>
+                <label>Your Background</label>
+                <div className="background-radio-group">
+                  <label className="radio-option">
+                    <input
+                      type="radio"
+                      name="background"
+                      value="software"
+                      checked={backgroundType === 'software'}
+                      onChange={(e) => setBackgroundType(e.target.value)}
+                    />
+                    <div className="radio-content">
+                      <strong>💻 Software Developer</strong>
+                      <span>I know programming but need help with hardware/robotics</span>
+                    </div>
+                  </label>
+                  <label className="radio-option">
+                    <input
+                      type="radio"
+                      name="background"
+                      value="hardware"
+                      checked={backgroundType === 'hardware'}
+                      onChange={(e) => setBackgroundType(e.target.value)}
+                    />
+                    <div className="radio-content">
+                      <strong>🔧 Hardware/Electronics Engineer</strong>
+                      <span>I know electronics but need help with programming</span>
+                    </div>
+                  </label>
+                </div>
               </div>
 
               <div className="form-group">

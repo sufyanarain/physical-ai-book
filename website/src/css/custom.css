@@ -745,6 +745,96 @@
   min-height: 80px;
 }
 
+/* Background radio group styles */
+.background-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: flex-start;
+  padding: 16px;
+  border: 2px solid #e8e8e8;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #f9f9f9;
+}
+
+.radio-option:hover {
+  border-color: #667eea;
+  background: #f5f7ff;
+}
+
+.radio-option input[type="radio"] {
+  margin-top: 2px;
+  margin-right: 12px;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.radio-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.radio-content strong {
+  font-size: 15px;
+  color: #333;
+}
+
+.radio-content span {
+  font-size: 13px;
+  color: #666;
+}
+
+.radio-option input[type="radio"]:checked + .radio-content {
+  color: #667eea;
+}
+
+.radio-option input[type="radio"]:checked + .radio-content strong {
+  color: #667eea;
+}
+
+.radio-option:has(input[type="radio"]:checked) {
+  border-color: #667eea;
+  background: #f5f7ff;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+[data-theme='dark'] .radio-option {
+  background: #242424;
+  border-color: #333;
+}
+
+[data-theme='dark'] .radio-option:hover {
+  border-color: #8b9efc;
+  background: #2a2a2a;
+}
+
+[data-theme='dark'] .radio-content strong {
+  color: #e0e0e0;
+}
+
+[data-theme='dark'] .radio-content span {
+  color: #999;
+}
+
+[data-theme='dark'] .radio-option:has(input[type="radio"]:checked) {
+  border-color: #8b9efc;
+  background: #2a2a2a;
+  box-shadow: 0 0 0 3px rgba(139, 158, 252, 0.1);
+}
+
+[data-theme='dark'] .radio-option input[type="radio"]:checked + .radio-content strong {
+  color: #8b9efc;
+}
+
 .error-message {
   background: #fee;
   color: #c33;
@@ -828,137 +918,3 @@
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
-/* Personalize Button Styles */
-.personalize-button-container {
-  margin-bottom: 2rem;
-  padding: 1rem;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-  border-radius: 12px;
-  border: 2px solid rgba(102, 126, 234, 0.2);
-}
-
-[data-theme='dark'] .personalize-button-container {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  border-color: rgba(102, 126, 234, 0.3);
-}
-
-.personalize-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.personalize-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
-.personalize-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.personalize-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.personalize-badge {
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-[data-theme='dark'] .personalize-badge {
-  background: rgba(102, 126, 234, 0.2);
-  color: #8b9efc;
-}
-
-.reset-button {
-  background: rgba(0, 0, 0, 0.05);
-  color: #666;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.reset-button:hover {
-  background: rgba(0, 0, 0, 0.1);
-  color: #333;
-}
-
-[data-theme='dark'] .reset-button {
-  background: rgba(255, 255, 255, 0.05);
-  color: #aaa;
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-[data-theme='dark'] .reset-button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-}
-
-.personalize-error {
-  margin-top: 8px;
-  padding: 8px 12px;
-  background: rgba(204, 51, 51, 0.1);
-  color: #c33;
-  border-radius: 6px;
-  font-size: 13px;
-}
-
-[data-theme='dark'] .personalize-error {
-  background: rgba(204, 51, 51, 0.2);
-}
-
-.spinner {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.personalized-content {
-  animation: fadeIn 0.5s ease-in;
-  padding: 1.5rem;
-  background: rgba(102, 126, 234, 0.03);
-  border-left: 4px solid #667eea;
-  border-radius: 8px;
-  margin: 1rem 0;
-}
-
-[data-theme='dark'] .personalized-content {
-  background: rgba(102, 126, 234, 0.08);
-}

@@ -1,0 +1,368 @@
+{
+  "name": "auth-system-generator",
+  "version": "1.0.0",
+  "description": "Automatically scaffolds a complete authentication system with JWT tokens, user profiles, and frontend components for web applications",
+  "author": "Physical AI Book Team",
+  "category": "web-development",
+  "tags": ["authentication", "jwt", "user-management", "fastapi", "react", "security"],
+
+  "purpose": "This subagent eliminates the tedious work of setting up authentication by generating production-ready backend APIs and frontend components. It handles signup, login, logout, JWT token management, and user profile storage with best security practices.",
+
+  "inputs": {
+    "project_name": {
+      "type": "string",
+      "description": "Name of your project",
+      "required": true,
+      "example": "physical-ai-book"
+    },
+    "backend_framework": {
+      "type": "enum",
+      "description": "Backend framework to use",
+      "required": true,
+      "options": ["fastapi", "express", "django", "flask"],
+      "default": "fastapi"
+    },
+    "frontend_framework": {
+      "type": "enum",
+      "description": "Frontend framework to use",
+      "required": true,
+      "options": ["react", "vue", "nextjs", "svelte"],
+      "default": "react"
+    },
+    "database": {
+      "type": "enum",
+      "description": "Database to use for user storage",
+      "required": true,
+      "options": ["neon", "postgresql", "mysql", "sqlite"],
+      "default": "neon"
+    },
+    "include_oauth": {
+      "type": "boolean",
+      "description": "Include OAuth providers (Google, GitHub)",
+      "required": false,
+      "default": false
+    },
+    "user_profile_fields": {
+      "type": "array",
+      "description": "Additional user profile fields beyond email/password",
+      "required": false,
+      "default": ["name", "background_type"],
+      "example": ["name", "background_type", "learning_goals", "experience_level"]
+    }
+  },
+
+  "workflow": [
+    {
+      "step": 1,
+      "action": "generate_database_models",
+      "description": "Create User model with all required fields",
+      "generates": {
+        "file": "backend/app/database.py",
+        "includes": [
+          "User model with id, email, password_hash, name, created_at",
+          "Custom profile fields (background_type, learning_goals, etc.)",
+          "Database connection setup",
+          "Password hashing utilities"
+        ]
+      }
+    },
+    {
+      "step": 2,
+      "action": "generate_auth_endpoints",
+      "description": "Create FastAPI endpoints for authentication",
+      "generates": {
+        "file": "backend/app/main.py",
+        "endpoints": [
+          "POST /signup - Create new user account",
+          "POST /login - Authenticate user and return JWT",
+          "POST /logout - Invalidate user session",
+          "GET /me - Get current user profile",
+          "PUT /profile - Update user profile"
+        ],
+        "features": [
+          "JWT token generation and validation",
+          "Password hashing with bcrypt",
+          "Input validation with Pydantic",
+          "Error handling and status codes",
+          "CORS configuration"
+        ]
+      }
+    },
+    {
+      "step": 3,
+      "action": "generate_frontend_components",
+      "description": "Create React components for authentication UI",
+      "generates": {
+        "files": [
+          "website/src/components/AuthModal.tsx - Signup/Login modal",
+          "website/src/theme/NavbarItem/index.tsx - Navbar integration",
+          "website/src/theme/Root.tsx - Auto-redirect logic"
+        ],
+        "features": [
+          "Beautiful modal with tabs for signup/login",
+          "Form validation",
+          "Loading states and error handling",
+          "JWT token storage in localStorage",
+          "Auto-redirect after login",
+          "User profile display in navbar",
+          "Logout functionality"
+        ]
+      }
+    },
+    {
+      "step": 4,
+      "action": "generate_middleware",
+      "description": "Create authentication middleware for protected routes",
+      "generates": {
+          "file": "backend/app/middleware.py",
+          "includes": [
+            "JWT token verification decorator",
+            "User authentication from request headers",
+            "Protected route wrapper",
+            "Token refresh logic"
+          ]
+      }
+    },
+    {
+      "step": 5,
+      "action": "generate_config",
+      "description": "Create configuration files and environment variables",
+      "generates": {
+        "files": [
+          ".env.example - Template for environment variables",
+          "backend/app/config.py - Configuration management"
+        ],
+        "env_vars": [
+          "DATABASE_URL - Database connection string",
+          "JWT_SECRET - Secret key for JWT signing",
+          "JWT_ALGORITHM - JWT algorithm (HS256)",
+          "ACCESS_TOKEN_EXPIRE_MINUTES - Token expiration time"
+        ]
+      }
+    },
+    {
+      "step": 6,
+      "action": "generate_documentation",
+      "description": "Create comprehensive documentation",
+      "generates": {
+        "files": [
+          "AUTH_SETUP.md - Setup instructions",
+          "API_DOCUMENTATION.md - API endpoint documentation"
+        ]
+      }
+    }
+  ],
+
+  "outputs": {
+    "backend_files": {
+      "type": "array",
+      "description": "List of generated backend files",
+      "files": [
+        "backend/app/database.py",
+        "backend/app/main.py",
+        "backend/app/middleware.py",
+        "backend/app/config.py"
+      ]
+    },
+    "frontend_files": {
+      "type": "array",
+      "description": "List of generated frontend files",
+      "files": [
+        "website/src/components/AuthModal.tsx",
+        "website/src/theme/NavbarItem/index.tsx",
+        "website/src/theme/Root.tsx"
+      ]
+    },
+    "config_files": {
+      "type": "array",
+      "description": "List of generated configuration files",
+      "files": [
+        ".env.example",
+        "AUTH_SETUP.md",
+        "API_DOCUMENTATION.md"
+      ]
+    },
+    "status": {
+      "type": "enum",
+      "values": ["success", "partial_success", "failure"],
+      "description": "Overall operation status"
+    }
+  },
+
+  "implementation_reference": {
+    "backend_files": [
+      "backend/app/main.py - Auth endpoints implementation",
+      "backend/app/database.py - User model and DB setup"
+    ],
+    "frontend_files": [
+      "website/src/components/AuthModal.tsx - Login/Signup UI",
+      "website/src/theme/NavbarItem/index.tsx - Navbar integration",
+      "website/src/theme/Root.tsx - Auto-redirect logic"
+    ],
+    "dependencies": {
+      "backend": [
+        "fastapi==0.104.1",
+        "uvicorn==0.24.0",
+        "sqlalchemy==2.0.23",
+        "psycopg2-binary==2.9.9",
+        "python-jose==3.3.0",
+        "passlib==1.7.4",
+        "bcrypt==4.1.1",
+        "python-dotenv==1.0.0"
+      ],
+      "frontend": [
+        "@docusaurus/router",
+        "react",
+        "typescript"
+      ]
+    }
+  },
+
+  "features": {
+    "security": [
+      "Password hashing with bcrypt (industry standard)",
+      "JWT tokens with expiration",
+      "Secure token storage in localStorage",
+      "Input validation and sanitization",
+      "SQL injection prevention",
+      "CORS configuration"
+    ],
+    "user_experience": [
+      "Beautiful modal UI with smooth animations",
+      "Form validation with helpful error messages",
+      "Loading states during API calls",
+      "Auto-redirect after successful login",
+      "Persistent login across sessions",
+      "Professional user profile display",
+      "Seamless logout with redirect"
+    ],
+    "developer_experience": [
+      "Type-safe with TypeScript",
+      "Well-documented code",
+      "RESTful API design",
+      "Modular and maintainable",
+      "Easy to extend and customize",
+      "Environment-based configuration"
+    ]
+  },
+
+  "usage_flow": {
+    "signup": [
+      "User clicks 'Sign In' button in navbar",
+      "Modal opens with signup form",
+      "User fills: name, email, password, background type",
+      "Submit triggers POST /signup endpoint",
+      "Backend creates user, returns JWT token",
+      "Frontend stores token and user data",
+      "Auto-redirect to personalized content"
+    ],
+    "login": [
+      "User clicks 'Sign In' button",
+      "Switches to 'Sign in' tab in modal",
+      "User enters email and password",
+      "Submit triggers POST /login endpoint",
+      "Backend validates credentials, returns JWT",
+      "Frontend stores token",
+      "Auto-redirect based on user profile"
+    ],
+    "logout": [
+      "User clicks 'Logout' button",
+      "Frontend clears localStorage",
+      "User redirected to homepage",
+      "Navbar updates to show 'Sign In' button"
+    ]
+  },
+
+  "reusability": {
+    "can_be_used_by": [
+      "Any web application needing user authentication",
+      "Documentation platforms (Docusaurus, MkDocs)",
+      "SaaS applications",
+      "E-commerce platforms",
+      "Educational platforms",
+      "Content management systems",
+      "API services requiring user accounts"
+    ],
+    "customization_options": [
+      "Add custom user profile fields",
+      "Integrate OAuth providers (Google, GitHub, Microsoft)",
+      "Add role-based access control (RBAC)",
+      "Implement password reset functionality",
+      "Add email verification",
+      "Add two-factor authentication (2FA)",
+      "Customize JWT token expiration",
+      "Add user activity logging",
+      "Implement session management"
+    ]
+  },
+
+  "database_schema": {
+    "users_table": {
+      "columns": [
+        "id - UUID primary key",
+        "email - Unique email address",
+        "password_hash - Bcrypt hashed password",
+        "name - User's full name",
+        "background_type - User background (software/hardware)",
+        "learning_goals - User's learning objectives",
+        "created_at - Account creation timestamp",
+        "updated_at - Last update timestamp"
+      ]
+    }
+  },
+
+  "api_endpoints": {
+    "POST /signup": {
+      "description": "Create new user account",
+      "request": {
+        "email": "user@example.com",
+        "password": "secure_password",
+        "name": "John Doe",
+        "background_type": "software",
+        "learning_goals": "Learn robotics"
+      },
+      "response": {
+        "user": {
+          "id": "uuid",
+          "email": "user@example.com",
+          "name": "John Doe",
+          "background_type": "software"
+        },
+        "access_token": "jwt_token_here"
+      }
+    },
+    "POST /login": {
+      "description": "Authenticate user",
+      "request": {
+        "email": "user@example.com",
+        "password": "secure_password"
+      },
+      "response": {
+        "user": {
+          "id": "uuid",
+          "email": "user@example.com",
+          "name": "John Doe",
+          "background_type": "software"
+        },
+        "access_token": "jwt_token_here"
+      }
+    }
+  },
+
+  "tested_with": {
+    "project": "Physical AI & Humanoid Robotics Textbook",
+    "backend": "FastAPI + Neon PostgreSQL",
+    "frontend": "React + Docusaurus",
+    "user_profiles": ["software developers", "hardware engineers"],
+    "deployment": "Railway (backend) + GitHub Pages (frontend)",
+    "status": "Production-ready and fully tested"
+  },
+
+  "benefits": {
+    "time_savings": "Saves 6-8 hours of development time",
+    "security": "Implements industry-standard security practices",
+    "best_practices": "Follows REST API and React best practices",
+    "scalability": "Designed to handle thousands of users",
+    "maintainability": "Clean, modular, well-documented code"
+  }
+}

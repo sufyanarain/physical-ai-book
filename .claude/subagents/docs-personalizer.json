@@ -1,0 +1,164 @@
+{
+  "name": "docs-personalizer",
+  "version": "1.0.0",
+  "description": "Automatically personalizes technical documentation for different audience backgrounds (software developers, hardware engineers, beginners, advanced users)",
+  "author": "Physical AI Book Team",
+  "category": "documentation",
+  "tags": ["documentation", "personalization", "llm", "content-generation"],
+
+  "purpose": "This subagent takes generic technical documentation and adapts it to match the reader's background and experience level. It uses LLM-based content transformation to add relevant analogies, examples, and explanations tailored to specific audiences.",
+
+  "inputs": {
+    "source_directory": {
+      "type": "path",
+      "description": "Path to source documentation directory containing markdown files",
+      "required": true,
+      "example": "docs/"
+    },
+    "target_audience": {
+      "type": "enum",
+      "description": "Target audience profile for personalization",
+      "required": true,
+      "options": ["software", "hardware", "beginner", "advanced"],
+      "default": "software"
+    },
+    "output_directory": {
+      "type": "path",
+      "description": "Destination directory for personalized documentation",
+      "required": false,
+      "default": "docs-{audience}"
+    },
+    "llm_provider": {
+      "type": "enum",
+      "description": "LLM provider to use for content generation",
+      "required": false,
+      "options": ["groq", "openai", "anthropic"],
+      "default": "groq"
+    },
+    "model": {
+      "type": "string",
+      "description": "Specific model to use for personalization",
+      "required": false,
+      "default": "llama-3.3-70b-versatile"
+    }
+  },
+
+  "workflow": [
+    {
+      "step": 1,
+      "action": "scan_directory",
+      "description": "Recursively scan source directory for all .md files",
+      "implementation": "Use pathlib.Path.rglob('*.md') to find all markdown files"
+    },
+    {
+      "step": 2,
+      "action": "read_file",
+      "description": "Read each markdown file with UTF-8 encoding",
+      "implementation": "file.read_text(encoding='utf-8')"
+    },
+    {
+      "step": 3,
+      "action": "personalize_content",
+      "description": "Use LLM to adapt content for target audience",
+      "llm_prompt": {
+        "system": "You are an expert technical writer specializing in creating audience-specific documentation. Adapt the following content for {target_audience} developers/engineers.",
+        "instructions": [
+          "Maintain ALL markdown formatting (headers, lists, code blocks, links, images)",
+          "Keep frontmatter (---) completely unchanged",
+          "Do NOT modify code blocks - keep them exactly as is",
+          "Add relevant analogies and examples for {target_audience} background",
+          "Adjust technical depth based on audience expertise",
+          "Keep technical terms and API names unchanged",
+          "Preserve document structure and section organization"
+        ],
+        "audience_profiles": {
+          "software": "Software developers familiar with programming, APIs, and web development. Use software engineering analogies (classes, functions, REST APIs, databases).",
+          "hardware": "Hardware engineers familiar with circuits, sensors, and embedded systems. Use hardware analogies (voltage, circuits, microcontrollers, GPIO pins).",
+          "beginner": "Beginners with little technical background. Use everyday analogies, explain technical terms, provide step-by-step instructions.",
+          "advanced": "Advanced users with deep technical expertise. Use concise explanations, focus on optimization and best practices."
+        }
+      }
+    },
+    {
+      "step": 4,
+      "action": "save_file",
+      "description": "Save personalized content maintaining directory structure",
+      "implementation": "Create output directory structure mirroring source, write files with UTF-8 encoding"
+    },
+    {
+      "step": 5,
+      "action": "report_progress",
+      "description": "Display progress and completion status",
+      "implementation": "Print file count, success/failure status, output directory path"
+    }
+  ],
+
+  "outputs": {
+    "personalized_docs_directory": {
+      "type": "path",
+      "description": "Path to directory containing personalized documentation"
+    },
+    "files_processed": {
+      "type": "number",
+      "description": "Number of files successfully personalized"
+    },
+    "processing_time": {
+      "type": "number",
+      "description": "Total time taken in seconds"
+    },
+    "status": {
+      "type": "enum",
+      "values": ["success", "partial_success", "failure"],
+      "description": "Overall operation status"
+    }
+  },
+
+  "usage_example": {
+    "command": "python backend/generate_docs.py",
+    "description": "Run the personalization script to generate audience-specific documentation",
+    "expected_output": "Creates docs-software/ and docs-hardware/ directories with personalized content"
+  },
+
+  "implementation_reference": {
+    "file": "backend/generate_docs.py",
+    "key_functions": [
+      "personalize_content(client, content, background_type)",
+      "generate_personalized_docs()"
+    ],
+    "dependencies": [
+      "groq==0.4.1",
+      "python-dotenv==1.0.0"
+    ]
+  },
+
+  "reusability": {
+    "can_be_used_by": [
+      "Any documentation project (Docusaurus, MkDocs, GitBook, etc.)",
+      "Technical tutorials and guides",
+      "Educational content platforms",
+      "API documentation",
+      "Product documentation"
+    ],
+    "customization_options": [
+      "Define custom audience profiles",
+      "Adjust LLM prompts for specific domains",
+      "Add new audience types (e.g., 'student', 'researcher', 'manager')",
+      "Configure different LLM providers/models",
+      "Customize output directory structure"
+    ]
+  },
+
+  "benefits": {
+    "for_readers": "Get documentation tailored to their background and experience level",
+    "for_writers": "Write once, automatically generate multiple audience-specific versions",
+    "for_teams": "Maintain single source of truth while serving diverse audiences",
+    "performance": "Pre-generation means instant page loads with zero runtime costs"
+  },
+
+  "tested_with": {
+    "project": "Physical AI & Humanoid Robotics Textbook",
+    "audiences": ["software", "hardware"],
+    "file_count": 9,
+    "success_rate": "100%"
+  }
+}

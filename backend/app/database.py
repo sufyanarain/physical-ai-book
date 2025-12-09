@@ -23,8 +23,7 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     
     # Background information
-    software_experience = Column(String(50), default='beginner')  # beginner, intermediate, advanced
-    hardware_experience = Column(String(50), default='beginner')
+    background_type = Column(String(50), default='software')  # 'software' or 'hardware'
     learning_goals = Column(Text, nullable=True)
     
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -185,7 +184,7 @@ class Database:
             session.close()
 
     def create_user(self, email: str, name: str, password_hash: str, 
-                   software_exp: str = 'beginner', hardware_exp: str = 'beginner',
+                   background_type: str = 'software',
                    learning_goals: str = None):
         """Create a new user"""
         session = self.get_session()
@@ -202,8 +201,7 @@ class Database:
                 email=email,
                 name=name,
                 password_hash=password_hash,
-                software_experience=software_exp,
-                hardware_experience=hardware_exp,
+                background_type=background_type,
                 learning_goals=learning_goals
             )
             session.add(user)

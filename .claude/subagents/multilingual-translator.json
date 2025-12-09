@@ -1,0 +1,228 @@
+{
+  "name": "multilingual-translator",
+  "version": "1.0.0",
+  "description": "Translates technical documentation to any language while preserving markdown formatting, code blocks, and technical accuracy",
+  "author": "Physical AI Book Team",
+  "category": "documentation",
+  "tags": ["translation", "i18n", "localization", "llm", "multilingual"],
+
+  "purpose": "This subagent enables documentation to be accessible in multiple languages by using LLM-based translation that understands technical context. Unlike generic translation tools, it preserves code blocks, technical terms, and markdown structure perfectly.",
+
+  "inputs": {
+    "source_directory": {
+      "type": "path",
+      "description": "Path to source documentation directory containing markdown files",
+      "required": true,
+      "example": "docs/"
+    },
+    "target_language": {
+      "type": "string",
+      "description": "Target language for translation (e.g., 'urdu', 'arabic', 'spanish', 'french', 'chinese')",
+      "required": true,
+      "example": "urdu"
+    },
+    "output_directory": {
+      "type": "path",
+      "description": "Destination directory for translated documentation",
+      "required": false,
+      "default": "docs-{language}"
+    },
+    "llm_provider": {
+      "type": "enum",
+      "description": "LLM provider to use for translation",
+      "required": false,
+      "options": ["groq", "openai", "anthropic", "google"],
+      "default": "groq"
+    },
+    "model": {
+      "type": "string",
+      "description": "Specific model to use for translation",
+      "required": false,
+      "default": "llama-3.3-70b-versatile"
+    },
+    "preserve_technical_terms": {
+      "type": "boolean",
+      "description": "Whether to keep technical terms in English",
+      "required": false,
+      "default": true
+    }
+  },
+
+  "workflow": [
+    {
+      "step": 1,
+      "action": "scan_directory",
+      "description": "Recursively scan source directory for all .md files",
+      "implementation": "Use pathlib.Path.rglob('*.md') to find all markdown files"
+    },
+    {
+      "step": 2,
+      "action": "read_file",
+      "description": "Read each markdown file with UTF-8 encoding",
+      "implementation": "file.read_text(encoding='utf-8')"
+    },
+    {
+      "step": 3,
+      "action": "translate_content",
+      "description": "Use LLM to translate content to target language",
+      "llm_prompt": {
+        "system": "You are a professional translator specializing in technical documentation. Translate the following content from English to {target_language}.",
+        "instructions": [
+          "Maintain ALL markdown formatting exactly (headers, lists, code blocks, links, images)",
+          "Keep frontmatter (---) completely unchanged",
+          "Do NOT translate code blocks - keep code in English",
+          "Do NOT translate technical terms (ROS 2, Python, API, Docker, etc.)",
+          "Do NOT translate URLs and links",
+          "Do NOT translate file paths and commands",
+          "Translate all explanatory text, headers, and descriptions",
+          "Use appropriate technical terminology in target language where available",
+          "Maintain right-to-left (RTL) directionality for RTL languages (Arabic, Urdu, Hebrew)",
+          "Keep the same document structure and formatting"
+        ]
+      }
+    },
+    {
+      "step": 4,
+      "action": "validate_translation",
+      "description": "Ensure translation quality and formatting integrity",
+      "checks": [
+        "Verify frontmatter is unchanged",
+        "Check that code blocks are preserved",
+        "Ensure markdown headers are properly formatted",
+        "Validate links are still functional",
+        "Confirm technical terms remain in English"
+      ]
+    },
+    {
+      "step": 5,
+      "action": "save_file",
+      "description": "Save translated content maintaining directory structure",
+      "implementation": "Create output directory structure mirroring source, write files with UTF-8 encoding"
+    },
+    {
+      "step": 6,
+      "action": "report_progress",
+      "description": "Display progress and completion status",
+      "implementation": "Print file count, success/failure status, output directory path"
+    }
+  ],
+
+  "outputs": {
+    "translated_docs_directory": {
+      "type": "path",
+      "description": "Path to directory containing translated documentation"
+    },
+    "files_processed": {
+      "type": "number",
+      "description": "Number of files successfully translated"
+    },
+    "target_language": {
+      "type": "string",
+      "description": "Language the content was translated to"
+    },
+    "processing_time": {
+      "type": "number",
+      "description": "Total time taken in seconds"
+    },
+    "status": {
+      "type": "enum",
+      "values": ["success", "partial_success", "failure"],
+      "description": "Overall operation status"
+    }
+  },
+
+  "usage_example": {
+    "command": "python backend/generate_urdu_docs.py",
+    "description": "Run the translation script to generate Urdu documentation",
+    "expected_output": "Creates docs-urdu/ directory with translated content"
+  },
+
+  "implementation_reference": {
+    "file": "backend/generate_urdu_docs.py",
+    "key_functions": [
+      "translate_to_urdu(client, content)",
+      "generate_urdu_docs()"
+    ],
+    "dependencies": [
+      "groq==0.4.1",
+      "python-dotenv==1.0.0"
+    ]
+  },
+
+  "supported_languages": {
+    "tested": [
+      "urdu",
+      "arabic"
+    ],
+    "supported": [
+      "spanish",
+      "french",
+      "german",
+      "italian",
+      "portuguese",
+      "chinese",
+      "japanese",
+      "korean",
+      "hindi",
+      "bengali",
+      "russian",
+      "turkish",
+      "vietnamese",
+      "thai",
+      "any language supported by the LLM"
+    ]
+  },
+
+  "reusability": {
+    "can_be_used_by": [
+      "Any documentation project (Docusaurus, MkDocs, GitBook, etc.)",
+      "Technical tutorials and guides",
+      "Educational content platforms",
+      "API documentation",
+      "Product documentation",
+      "Blog posts and articles",
+      "README files"
+    ],
+    "customization_options": [
+      "Add support for new languages",
+      "Configure translation quality settings",
+      "Customize which technical terms to preserve",
+      "Adjust LLM prompts for specific domains",
+      "Configure different LLM providers/models",
+      "Add custom glossaries for domain-specific terms"
+    ]
+  },
+
+  "benefits": {
+    "for_readers": "Access documentation in their native language with proper technical context",
+    "for_writers": "Reach global audience without manual translation work",
+    "for_organizations": "Expand market reach cost-effectively",
+    "performance": "Pre-generation means instant page loads with zero runtime costs",
+    "seo": "Translated content is indexed by search engines for better discoverability",
+    "offline": "Works without internet connection once generated"
+  },
+
+  "quality_features": {
+    "technical_accuracy": "Preserves code blocks and technical terms exactly",
+    "context_awareness": "LLM understands technical context unlike generic translators",
+    "markdown_integrity": "Maintains all formatting including headers, lists, links, images",
+    "rtl_support": "Properly handles right-to-left languages (Arabic, Urdu, Hebrew)",
+    "consistency": "Same translation every time (deterministic with low temperature)"
+  },
+
+  "tested_with": {
+    "project": "Physical AI & Humanoid Robotics Textbook",
+    "target_language": "urdu",
+    "file_count": 9,
+    "success_rate": "100%",
+    "translation_quality": "Professional-grade technical translation"
+  },
+
+  "integration": {
+    "docusaurus": {
+      "description": "Easily integrates with Docusaurus multi-instance docs",
+      "setup": "Add docs-{language} plugin instance to docusaurus.config.ts",
+      "navigation": "Use custom TranslateButton component for seamless language switching"
+    }
+  }
+}

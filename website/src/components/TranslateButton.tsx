@@ -1,118 +1,60 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useHistory, useLocation } from '@docusaurus/router';
 import '@site/src/css/custom.css';
 
-// Use local backend in development, Railway in production
-const BACKEND_URL = process.env.NODE_ENV === 'development'
-  ? 'http://localhost:8000'
-  : 'https://physical-ai-backend-production-b62f.up.railway.app';
-
 interface TranslateButtonProps {
-  content: string;
+  content?: string;
   onTranslate?: (translatedContent: string) => void;
 }
 
 export default function TranslateButton({ content, onTranslate }: TranslateButtonProps): React.ReactElement {
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [isTranslated, setIsTranslated] = useState(false);
-  const [translatedContent, setTranslatedContent] = useState('');
-  const [error, setError] = useState('');
+  const history = useHistory();
+  const location = useLocation();
+  const [isUrdu, setIsUrdu] = useState(false);
 
-  // Check if we have cached translation in sessionStorage
-  useEffect(() => {
-    // Create a simple hash from content for cache key (avoiding btoa with Unicode)
-    const createHash = (str: string) => {
-      let hash = 0;
-      for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // Convert to 32bit integer
-      }
-      return hash.toString(36);
-    };
-    
-    const cacheKey = `translation_${createHash(content.substring(0, 100))}`;
-    const cached = sessionStorage.getItem(cacheKey);
-    if (cached) {
-      try {
-        const { translated, timestamp } = JSON.parse(cached);
-        // Cache valid for 1 hour
-        if (Date.now() - timestamp < 3600000) {
-          setTranslatedContent(translated);
+  // Check if currently on Urdu docs
+  React.useEffect(() => {
+    setIsUrdu(location.pathname.includes('/docs-urdu/'));
+  }, [location.pathname]);
+
+  const handleTranslate = () => {
+    const currentPath = location.pathname;
+
+    if (isUrdu) {
+      // Currently on Urdu → Switch back to original (English or personalized)
+      // Check if user is logged in to determine which version to show
+      const userStr = localStorage.getItem('user');
+      let targetPath = currentPath.replace('/docs-urdu/', '/docs/');
+
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          const backgroundType = user.background_type;
+
+          if (backgroundType) {
+            // User is logged in → redirect to their personalized docs
+            targetPath = currentPath.replace('/docs-urdu/', `/docs-${backgroundType}/`);
+          }
+        } catch (e) {
+          console.error('Error parsing user data:', e);
         }
-      } catch (e) {
-        console.error('Cache parse error:', e);
-      }
-    }
-  }, [content]);
-
-  const handleTranslate = async () => {
-    if (isTranslated) {
-      // Toggle back to original
-      setIsTranslated(false);
-      if (onTranslate) {
-        onTranslate(''); // Clear translation
-      }
-      return;
-    }
-
-    // Use cached translation if available
-    if (translatedContent) {
-      setIsTranslated(true);
-      if (onTranslate) {
-        onTranslate(translatedContent);
-      }
-      return;
-    }
-
-    setIsTranslating(true);
-    setError('');
-
-    try {
-      const response = await fetch(`${BACKEND_URL}/translate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: content,
-          target_language: 'urdu'
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Translation failed');
       }
 
-      const data = await response.json();
-      const translated = data.translated;
-      setTranslatedContent(translated);
-      setIsTranslated(true);
+      history.push(targetPath + location.search + location.hash);
+    } else {
+      // Currently on English/personalized → Switch to Urdu
+      let targetPath = currentPath;
 
-      // Cache the translation using hash instead of btoa
-      const createHash = (str: string) => {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-          const char = str.charCodeAt(i);
-          hash = ((hash << 5) - hash) + char;
-          hash = hash & hash;
-        }
-        return hash.toString(36);
-      };
-      
-      const cacheKey = `translation_${createHash(content.substring(0, 100))}`;
-      sessionStorage.setItem(cacheKey, JSON.stringify({
-        translated,
-        timestamp: Date.now()
-      }));
-
-      if (onTranslate) {
-        onTranslate(translated);
+      // Handle different doc paths
+      if (currentPath.includes('/docs-software/')) {
+        targetPath = currentPath.replace('/docs-software/', '/docs-urdu/');
+      } else if (currentPath.includes('/docs-hardware/')) {
+        targetPath = currentPath.replace('/docs-hardware/', '/docs-urdu/');
+      } else if (currentPath.includes('/docs/')) {
+        targetPath = currentPath.replace('/docs/', '/docs-urdu/');
       }
-    } catch (err) {
-      setError('Failed to translate content. Please try again.');
-      console.error('Translation error:', err);
-    } finally {
-      setIsTranslating(false);
+
+      history.push(targetPath + location.search + location.hash);
     }
   };
 
@@ -120,14 +62,13 @@ export default function TranslateButton({ content, onTranslate }: TranslateButto
     <div style={{ marginBottom: '1rem' }}>
       <button
         onClick={handleTranslate}
-        disabled={isTranslating}
         style={{
           padding: '8px 16px',
-          backgroundColor: isTranslated ? '#28a745' : '#007bff',
+          backgroundColor: isUrdu ? '#28a745' : '#007bff',
           color: 'white',
           border: 'none',
           borderRadius: '4px',
-          cursor: isTranslating ? 'not-allowed' : 'pointer',
+          cursor: 'pointer',
           fontSize: '14px',
           fontWeight: '500',
           display: 'inline-flex',
@@ -136,27 +77,13 @@ export default function TranslateButton({ content, onTranslate }: TranslateButto
           transition: 'background-color 0.2s'
         }}
         onMouseEnter={(e) => {
-          if (!isTranslating) {
-            e.currentTarget.style.backgroundColor = isTranslated ? '#218838' : '#0056b3';
-          }
+          e.currentTarget.style.backgroundColor = isUrdu ? '#218838' : '#0056b3';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = isTranslated ? '#28a745' : '#007bff';
+          e.currentTarget.style.backgroundColor = isUrdu ? '#28a745' : '#007bff';
         }}
       >
-        {isTranslating ? (
-          <>
-            <span className="spinner" style={{
-              width: '14px',
-              height: '14px',
-              border: '2px solid rgba(255, 255, 255, 0.3)',
-              borderTopColor: 'white',
-              borderRadius: '50%',
-              animation: 'spin 0.6s linear infinite'
-            }}></span>
-            Translating...
-          </>
-        ) : isTranslated ? (
+        {isUrdu ? (
           <>
             ✓ Show Original
           </>
@@ -166,19 +93,6 @@ export default function TranslateButton({ content, onTranslate }: TranslateButto
           </>
         )}
       </button>
-
-      {error && (
-        <div style={{
-          marginTop: '8px',
-          padding: '8px 12px',
-          backgroundColor: '#f8d7da',
-          color: '#721c24',
-          borderRadius: '4px',
-          fontSize: '14px'
-        }}>
-          {error}
-        </div>
-      )}
 
       <style>{`
         @keyframes spin {

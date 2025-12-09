@@ -39,6 +39,39 @@ const config: Config = {
     ],
   ],
 
+  plugins: [
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-software',
+        path: 'docs-software',
+        routeBasePath: 'docs-software',
+        sidebarPath: './sidebars.ts',
+        editUrl: 'https://github.com/sufyanarain/physical-ai-book/tree/main/website/',
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-hardware',
+        path: 'docs-hardware',
+        routeBasePath: 'docs-hardware',
+        sidebarPath: './sidebars.ts',
+        editUrl: 'https://github.com/sufyanarain/physical-ai-book/tree/main/website/',
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-urdu',
+        path: 'docs-urdu',
+        routeBasePath: 'docs-urdu',
+        sidebarPath: './sidebars-urdu.ts',
+        editUrl: 'https://github.com/sufyanarain/physical-ai-book/tree/main/website/',
+      },
+    ],
+  ],
+
   themeConfig: {
     image: 'img/docusaurus-social-card.jpg',
     navbar: {
