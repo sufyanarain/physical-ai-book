@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkphysical_ai_textbook=self.webpackChunkphysical_ai_textbook||[]).push([[308],{1705:s=>{s.exports=JSON.parse('{"name":"docusaurus-plugin-content-docs","id":"docs-urdu-hardware"}')}}]);
