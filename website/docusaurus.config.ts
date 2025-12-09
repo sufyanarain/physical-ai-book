@@ -70,6 +70,26 @@ const config: Config = {
         editUrl: 'https://github.com/sufyanarain/physical-ai-book/tree/main/website/',
       },
     ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-urdu-software',
+        path: 'docs-urdu-software',
+        routeBasePath: 'docs-urdu-software',
+        sidebarPath: './sidebars-urdu.ts',
+        editUrl: 'https://github.com/sufyanarain/physical-ai-book/tree/main/website/',
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-urdu-hardware',
+        path: 'docs-urdu-hardware',
+        routeBasePath: 'docs-urdu-hardware',
+        sidebarPath: './sidebars-urdu.ts',
+        editUrl: 'https://github.com/sufyanarain/physical-ai-book/tree/main/website/',
+      },
+    ],
   ],
 
   themeConfig: {
