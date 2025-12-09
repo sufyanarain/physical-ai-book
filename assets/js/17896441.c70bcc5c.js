@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkphysical_ai_textbook=self.webpackChunkphysical_ai_textbook||[]).push([[8401],{2373:(s,e,t)=>{t.d(e,{A:()=>i});var a=t(4094),c=t(4848);function i(s){return(0,c.jsx)(a.A,Object.assign({},s))}}}]);
