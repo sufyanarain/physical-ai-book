@@ -1,0 +1,29 @@
+[build]
+  # Directory to change to before starting build
+  base = "website"
+  # Build command
+  command = "npm run build"
+  # Directory with the production-ready HTML files
+  publish = "build"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# Redirects and rewrites for SPA routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Headers for caching and security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

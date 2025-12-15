@@ -2,14 +2,15 @@ import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
-// Replace 'yourusername' and 'physical-ai-textbook' with your actual values
+// For Netlify deployment, update 'url' to your Netlify domain
 const config: Config = {
   title: '🤖 Physical AI & Humanoid Robotics',
   tagline: 'Master the future of embodied intelligence',
   favicon: 'img/favicon.ico',
 
-  url: 'https://sufyanarain.github.io',
-  baseUrl: '/physical-ai-book/',
+  // Update this to your Netlify domain after deployment (e.g., https://your-site-name.netlify.app)
+  url: process.env.URL || 'https://physical-ai-book.netlify.app',
+  baseUrl: '/',
 
   organizationName: 'sufyanarain',
   projectName: 'physical-ai-book',
